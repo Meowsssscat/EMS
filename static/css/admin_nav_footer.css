@@ -59,6 +59,7 @@ body {
     gap: 12px;
     text-decoration: none;
     color: var(--text-primary);
+    overflow: visible;
 }
 
 .logo-image {
@@ -73,6 +74,7 @@ body {
     font-weight: 700;
     color: var(--primary-navy);
     white-space: nowrap;
+    overflow: visible;
 }
 
 /* Desktop Navigation Links */
