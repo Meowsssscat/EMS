@@ -55,45 +55,13 @@ body {
     line-height: 1.6;
     color: var(--text-primary);
     background-color: var(--primary-gray);
-    
+    margin: 0;
+    padding: 0;
 }
 
 /* ==========================================================================
    Page Header
    ========================================================================== */
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-xl);
-    padding: var(--spacing-xl);
-    background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-dark);
-}
-
-.header-content h1 {
-    font-size: var(--font-size-3xl);
-    font-weight: 700;
-    color: var(--primary-navy);
-    margin: 0 0 var(--spacing-xs) 0;
-    line-height: 1.2;
-}
-
-.header-content p {
-    font-size: var(--font-size-lg);
-    color: var(--text-secondary);
-    font-weight: 400;
-    margin: 0;
-}
-
-.header-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-    align-items: center;
-}
 
 /* ==========================================================================
    Buttons
@@ -1059,10 +1027,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    body {
-        padding: var(--spacing-sm);
-    }
-    
+   
     .page-header {
         padding: var(--spacing-lg);
     }
