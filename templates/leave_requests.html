@@ -1,0 +1,470 @@
+{% extends "admin_layout.html" %}
+
+{% block title %}Leave Requests - EMS{% endblock %}
+
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/leave_requests.css') }}">{% endblock %}
+
+{% block content %}
+<div class="leave-requests-container">
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon total">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number" id="totalRequests">{{ stats.total_requests or 0 }}</span>
+                <span class="stat-label">Total Requests</span>
+                <div class="stat-trend neutral">
+                    <span>All time</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon pending">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12,6 12,12 16,14"></polyline>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number" id="pendingRequests">{{ stats.pending_requests or 0 }}</span>
+                <span class="stat-label">Pending Review</span>
+                <div class="stat-trend warning">
+                    <span>Requires attention</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon approved">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22,4 12,14.01 9,11.01"></polyline>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number" id="approvedRequests">{{ stats.approved_requests or 0 }}</span>
+                <span class="stat-label">Approved</span>
+                <div class="stat-trend positive">
+                    <span>This period</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon rejected">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number" id="rejectedRequests">{{ stats.rejected_requests or 0 }}</span>
+                <span class="stat-label">Rejected</span>
+                <div class="stat-trend neutral">
+                    <span>This period</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Search Section -->
+    <div class="filter-section">
+        <div class="filter-controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by employee name or leave type...">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </div>
+            
+            <div class="filter-group">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                
+                <select id="leaveTypeFilter" class="filter-select">
+                    <option value="">All Leave Types</option>
+                    <option value="Annual Leave">Annual Leave</option>
+                    <option value="Sick Leave">Sick Leave</option>
+                    <option value="Personal Leave">Personal Leave</option>
+                    <option value="Maternity Leave">Maternity Leave</option>
+                    <option value="Emergency Leave">Emergency Leave</option>
+                </select>
+                
+                <button class="action-btn ghost" id="clearFiltersBtn">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Requests Table -->
+    <div class="requests-section">
+        <div class="section-header">
+            <h2>Leave Requests</h2>
+            <div class="view-controls">
+                <button class="view-btn active" data-view="cards">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                </button>
+                <button class="view-btn" data-view="table">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M3 6h18M3 12h18m-18 6h18"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards View -->
+        <div class="requests-grid" id="cardsView">
+            {% if leave_requests %}
+                {% for request in leave_requests %}
+                <div class="request-card" data-status="{{ request.status }}" data-type="{{ request.leave_type }}" data-employee="{{ request.employees.name }}">
+                    <div class="card-header">
+                        <div class="employee-info">
+                            <div class="employee-avatar">
+                                <span>{{ request.employees.name[0].upper() }}</span>
+                            </div>
+                            <div class="employee-details">
+                                <h3>{{ request.employees.name }}</h3>
+                                <p>{{ request.employees.department or 'No Department' }} • {{ request.employees.position or 'No Position' }}</p>
+                            </div>
+                        </div>
+                        <div class="status-badge {{ request.status }}">
+                            <span>{{ request.status.title() }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="leave-details">
+                            <div class="leave-type">
+                                <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                </svg>
+                                <span>{{ request.leave_type }}</span>
+                            </div>
+                            
+                            <div class="leave-dates">
+                                <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span>{{ request.start_date }} to {{ request.end_date }}</span>
+                            </div>
+                            
+                            {% if request.reason %}
+                            <div class="leave-reason">
+                                <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M12 20h9"></path>
+                                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                </svg>
+                                <span>{{ request.reason }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="request-date">
+                                <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12,6 12,12 16,14"></polyline>
+                                </svg>
+                                <span>Submitted {{ request.created_at[:10] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-actions">
+                        {% if request.status == 'pending' %}
+                        <button class="action-btn small accent" onclick="updateLeaveStatus('{{ request.id }}', 'approved')">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Approve
+                        </button>
+                        <button class="action-btn small ghost" onclick="updateLeaveStatus('{{ request.id }}', 'rejected')">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Reject
+                        </button>
+                        {% else %}
+                        <button class="action-btn small secondary" onclick="updateLeaveStatus('{{ request.id }}', 'pending')">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                            </svg>
+                            Reset to Pending
+                        </button>
+                        {% endif %}
+                        <button class="action-btn small ghost" onclick="deleteLeaveRequest('{{ request.id }}')">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="3,6 5,6 21,6"></polyline>
+                                <path d="m19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                </div>
+                <h3>No Leave Requests Found</h3>
+                <p>There are currently no leave requests to display. Create a new request to get started.</p>
+                <button class="action-btn primary" onclick="openAddLeaveModal()">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Create First Request
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Table View -->
+        <div class="requests-table" id="tableView" style="display: none;">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if leave_requests %}
+                            {% for request in leave_requests %}
+                            <tr data-status="{{ request.status }}" data-type="{{ request.leave_type }}" data-employee="{{ request.employees.name }}">
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="employee-avatar small">
+                                            <span>{{ request.employees.name[0].upper() }}</span>
+                                        </div>
+                                        <div class="employee-info-table">
+                                            <span class="name">{{ request.employees.name }}</span>
+                                            <span class="department">{{ request.employees.department or 'No Department' }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="leave-type-badge">{{ request.leave_type }}</span>
+                                </td>
+                                <td>{{ request.start_date }}</td>
+                                <td>{{ request.end_date }}</td>
+                                <td>
+                                    <span class="duration-badge">
+                                        {% set start_date = request.start_date | strptime('%Y-%m-%d') %}
+                                        {% set end_date = request.end_date | strptime('%Y-%m-%d') %}
+                                        {% set duration = (end_date - start_date).days + 1 %}
+                                        {{ duration }} day{{ 's' if duration != 1 else '' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge {{ request.status }}">{{ request.status.title() }}</span>
+                                </td>
+                                <td>{{ request.created_at[:10] }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        {% if request.status == 'pending' %}
+                                        <button class="table-action-btn approve" onclick="updateLeaveStatus('{{ request.id }}', 'approved')" title="Approve">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <polyline points="20,6 9,17 4,12"></polyline>
+                                            </svg>
+                                        </button>
+                                        <button class="table-action-btn reject" onclick="updateLeaveStatus('{{ request.id }}', 'rejected')" title="Reject">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                        </button>
+                                        {% else %}
+                                        <button class="table-action-btn reset" onclick="updateLeaveStatus('{{ request.id }}', 'pending')" title="Reset to Pending">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                                            </svg>
+                                        </button>
+                                        {% endif %}
+                                        <button class="table-action-btn delete" onclick="deleteLeaveRequest('{{ request.id }}')" title="Delete">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <polyline points="3,6 5,6 21,6"></polyline>
+                                                <path d="m19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="empty-table">
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14,2 14,8 20,8"></polyline>
+                                        </svg>
+                                    </div>
+                                    <h3>No Leave Requests Found</h3>
+                                    <p>There are currently no leave requests to display.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Leave Request Modal -->
+<div class="modal-overlay" id="addLeaveModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Create New Leave Request</h3>
+            <button class="modal-close" id="closeAddLeaveModal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="addLeaveForm" class="modal-form">
+            <div class="form-group">
+                <label for="employeeSelect">Employee</label>
+                <select id="employeeSelect" name="employee_id" required>
+                    <option value="">Select Employee</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}">{{ employee.name }} - {{ employee.department or 'No Department' }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="leaveTypeSelect">Leave Type</label>
+                <select id="leaveTypeSelect" name="leave_type" required>
+                    <option value="">Select Leave Type</option>
+                    <option value="Annual Leave">Annual Leave</option>
+                    <option value="Sick Leave">Sick Leave</option>
+                    <option value="Personal Leave">Personal Leave</option>
+                    <option value="Maternity Leave">Maternity Leave</option>
+                    <option value="Paternity Leave">Paternity Leave</option>
+                    <option value="Emergency Leave">Emergency Leave</option>
+                    <option value="Bereavement Leave">Bereavement Leave</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate" name="start_date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate" name="end_date" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="leaveReason">Reason (Optional)</label>
+                <textarea id="leaveReason" name="reason" rows="3" placeholder="Please provide a reason for the leave request..."></textarea>
+            </div>
+            
+            <div class="duration-preview" id="durationPreview" style="display: none;">
+                <div class="duration-info">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span id="durationText">Duration: 0 days</span>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="action-btn secondary" id="cancelAddLeave">Cancel</button>
+                <button type="submit" class="action-btn primary" id="submitLeaveRequest">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                    Create Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal confirm-modal">
+        <div class="modal-header">
+            <h3 id="confirmTitle">Confirm Action</h3>
+        </div>
+        
+        <div class="modal-body">
+            <div class="confirm-icon" id="confirmIcon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                </svg>
+            </div>
+            <p id="confirmMessage">Are you sure you want to perform this action?</p>
+        </div>
+        
+        <div class="modal-actions">
+            <button type="button" class="action-btn secondary" id="cancelConfirm">Cancel</button>
+            <button type="button" class="action-btn primary" id="confirmAction">Confirm</button>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="{{ url_for('static', filename='js/leave_requests.js') }}"></script>
+{% endblock %}

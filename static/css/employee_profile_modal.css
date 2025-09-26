@@ -1,0 +1,454 @@
+/* Employee Profile Modal Styles */
+
+/* CSS Variables - BPO Color Palette */
+:root {
+    --primary-navy: #1A237E;
+    --primary-gray: #F5F5F5;
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --text-light: #FFFFFF;
+    --gray-dark: #E0E0E0;
+    
+    /* Additional colors for status badges */
+    --success-color: #2E7D32;
+    --warning-color: #F57C00;
+    --danger-color: #C62828;
+    --info-color: #1976D2;
+    
+    /* Modal specific variables */
+    --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    --modal-border-radius: 12px;
+    --modal-max-width: 520px;
+    --modal-padding: 2rem;
+    --transition-speed: 0.3s;
+    --overlay-bg: rgba(0, 0, 0, 0.5);
+}
+
+/* Modal Overlay */
+.profile-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--overlay-bg);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-speed) ease;
+}
+
+.profile-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Modal Container */
+.profile-modal {
+    background: var(--text-light);
+    border-radius: var(--modal-border-radius);
+    box-shadow: var(--modal-shadow);
+    max-width: var(--modal-max-width);
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: scale(0.8) translateY(-50px);
+    transition: all var(--transition-speed) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.profile-modal-overlay.active .profile-modal {
+    transform: scale(1) translateY(0);
+}
+
+/* Modal Header */
+.profile-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--modal-padding);
+    background: linear-gradient(135deg, var(--primary-navy), #303F9F);
+    color: var(--text-light);
+    border-bottom: 1px solid var(--gray-dark);
+}
+
+.profile-modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-light);
+}
+
+.profile-modal-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    transition: all 0.2s ease;
+}
+
+.profile-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.profile-modal-close:active {
+    transform: scale(0.95);
+}
+
+.profile-modal-close svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+/* Modal Body */
+.profile-modal-body {
+    padding: var(--modal-padding);
+    overflow-y: auto;
+    max-height: calc(90vh - 100px);
+}
+
+/* Profile Avatar Section */
+.profile-modal-avatar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.modal-profile-image,
+.modal-profile-initials {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid var(--primary-gray);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modal-profile-image {
+    object-fit: cover;
+}
+
+.modal-profile-initials {
+    background: linear-gradient(135deg, var(--primary-navy), #303F9F);
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Profile Details */
+.profile-modal-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.profile-detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--primary-gray);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-navy);
+    transition: all 0.2s ease;
+}
+
+.profile-detail-row:hover {
+    background: #F0F0F0;
+    transform: translateX(4px);
+}
+
+.profile-detail-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.profile-detail-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid transparent;
+}
+
+.status-badge.active {
+    background: rgba(46, 125, 50, 0.1);
+    color: var(--success-color);
+    border-color: rgba(46, 125, 50, 0.3);
+}
+
+.status-badge.inactive {
+    background: rgba(198, 40, 40, 0.1);
+    color: var(--danger-color);
+    border-color: rgba(198, 40, 40, 0.3);
+}
+
+.status-badge.pending {
+    background: rgba(245, 124, 0, 0.1);
+    color: var(--warning-color);
+    border-color: rgba(245, 124, 0, 0.3);
+}
+
+/* Loading State */
+.profile-modal-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.profile-modal-loading svg {
+    width: 48px;
+    height: 48px;
+    color: var(--primary-navy);
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.profile-modal-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--danger-color);
+    text-align: center;
+}
+
+.profile-modal-error svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-modal-overlay {
+        padding: 0.5rem;
+    }
+    
+    .profile-modal {
+        max-width: 100%;
+        max-height: 95vh;
+        margin: 0;
+    }
+    
+    .profile-modal-header,
+    .profile-modal-body {
+        padding: 1.5rem;
+    }
+    
+    .profile-modal-title {
+        font-size: 1.25rem;
+    }
+    
+    .modal-profile-image,
+    .modal-profile-initials {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .modal-profile-initials {
+        font-size: 1.5rem;
+    }
+    
+    .profile-modal-details {
+        gap: 1rem;
+    }
+    
+    .profile-detail-row {
+        padding: 0.75rem;
+    }
+    
+    .profile-detail-row:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-modal-overlay {
+        padding: 0;
+        align-items: stretch;
+    }
+    
+    .profile-modal {
+        border-radius: 0;
+        max-height: 100vh;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .profile-modal-header,
+    .profile-modal-body {
+        padding: 1rem;
+    }
+    
+    .profile-modal-body {
+        max-height: calc(100vh - 80px);
+    }
+    
+    .modal-profile-image,
+    .modal-profile-initials {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .modal-profile-initials {
+        font-size: 1.25rem;
+    }
+    
+    .profile-detail-row {
+        padding: 0.5rem 0.75rem;
+        border-left-width: 3px;
+    }
+    
+    .profile-detail-label {
+        font-size: 0.75rem;
+    }
+    
+    .profile-detail-value {
+        font-size: 0.9rem;
+    }
+}
+
+/* Animation for profile detail rows on load */
+.profile-detail-row {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideInUp 0.4s ease forwards;
+}
+
+.profile-detail-row:nth-child(1) { animation-delay: 0.1s; }
+.profile-detail-row:nth-child(2) { animation-delay: 0.15s; }
+.profile-detail-row:nth-child(3) { animation-delay: 0.2s; }
+.profile-detail-row:nth-child(4) { animation-delay: 0.25s; }
+.profile-detail-row:nth-child(5) { animation-delay: 0.3s; }
+.profile-detail-row:nth-child(6) { animation-delay: 0.35s; }
+.profile-detail-row:nth-child(7) { animation-delay: 0.4s; }
+.profile-detail-row:nth-child(8) { animation-delay: 0.45s; }
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus Management for Accessibility */
+.profile-modal-close:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .profile-modal {
+        border: 2px solid var(--text-primary);
+    }
+    
+    .profile-detail-row {
+        border: 1px solid var(--gray-dark);
+        border-left-width: 4px;
+    }
+    
+    .status-badge {
+        border-width: 2px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .profile-modal-overlay,
+    .profile-modal,
+    .profile-modal-close,
+    .profile-detail-row {
+        transition: none;
+        animation: none;
+    }
+    
+    .profile-modal-overlay.active .profile-modal {
+        transform: none;
+    }
+    
+    .profile-detail-row {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .profile-modal-overlay {
+        position: static;
+        background: none;
+        backdrop-filter: none;
+        opacity: 1;
+        visibility: visible;
+        padding: 0;
+    }
+    
+    .profile-modal {
+        box-shadow: none;
+        max-width: 100%;
+        max-height: none;
+        transform: none;
+        border: 1px solid var(--gray-dark);
+    }
+    
+    .profile-modal-header {
+        background: var(--primary-gray);
+        color: var(--text-primary);
+        border-bottom: 2px solid var(--primary-navy);
+    }
+    
+    .profile-modal-close {
+        display: none;
+    }
+    
+    .profile-detail-row:hover {
+        transform: none;
+    }
+}

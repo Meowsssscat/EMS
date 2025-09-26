@@ -1,0 +1,377 @@
+{% extends "employee_nav_footer_layout.html" %}
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/employee_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="content-container">
+        <!-- Welcome Hero Section -->
+        <div class="welcome-hero">
+            <div class="hero-content">
+                <div class="welcome-text">
+                    <h1 class="hero-title">Welcome back, {{ employee.first_name }}!</h1>
+                    <p class="hero-subtitle">Here's your dashboard overview for today</p>
+                    <div class="hero-meta">
+                        <span class="current-date" id="currentDate"></span>
+                        <span class="status-indicator online">
+                            <span class="status-dot"></span>
+                            Online
+                        </span>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <button class="hero-btn primary" onclick="clockInOut()">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12,6 12,12 16,14"/>
+                        </svg>
+                        Quick Clock In/Out
+                    </button>
+                </div> 
+            </div>
+        </div>
+
+        <!-- Performance Metrics Grid -->
+        <div class="metrics-section">
+            <div class="section-header">
+                <h2 class="section-title">Performance Overview</h2>
+                <div class="section-meta">This Month</div>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card primary">
+                    <div class="metric-header">
+                        <div class="metric-icon attendance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                        </div>
+                        <div class="metric-trend positive">
+                            <svg class="trend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/>
+                                <polyline points="17,6 23,6 23,12"/>
+                            </svg>
+                            +2%
+                        </div>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-number">{{ employee_stats.attendance_rate or '95' }}%</div>
+                        <div class="metric-label">Attendance Rate</div>
+                        <div class="metric-subtitle">Excellent performance</div>
+                    </div>
+                </div>
+
+                <div class="metric-card secondary">
+                    <div class="metric-header">
+                        <div class="metric-icon leave">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <calendar/>
+                                <path d="M8 2v4M16 2v4M3.5 9h17M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/>
+                            </svg>
+                        </div>
+                        <div class="metric-trend neutral">
+                            <svg class="trend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            75%
+                        </div>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-number">{{ employee_stats.leave_balance or '15' }}</div>
+                        <div class="metric-label">Leave Days Available</div>
+                        <div class="metric-subtitle">Out of 20 days total</div>
+                    </div>
+                </div>
+
+                <div class="metric-card warning">
+                    <div class="metric-header">
+                        <div class="metric-icon pending">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12,6 12,12 16,14"/>
+                            </svg>
+                        </div>
+                        <div class="metric-badge">{{ employee_stats.pending_requests or '1' }}</div>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-number">{{ employee_stats.pending_requests or '1' }}</div>
+                        <div class="metric-label">Pending Requests</div>
+                        <div class="metric-subtitle">Awaiting approval</div>
+                    </div>
+                </div>
+
+                <div class="metric-card info">
+                    <div class="metric-header">
+                        <div class="metric-icon team">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div class="department-badge">{{ employee.department or 'IT' }}</div>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-number">{{ employee_stats.team_size or '12' }}</div>
+                        <div class="metric-label">Team Members</div>
+                        <div class="metric-subtitle">{{ employee.department or 'IT' }} Department</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content Grid -->
+        <div class="dashboard-content">
+            <!-- Quick Actions Panel -->
+            <div class="dashboard-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Quick Actions</h3>
+                    <div class="panel-subtitle">Commonly used features</div>
+                </div>
+                <div class="panel-body">
+                    <div class="action-grid">
+                        <button class="action-card" onclick="clockInOut()">
+                            <div class="action-icon clockin">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12,6 12,12 16,14"/>
+                                </svg>
+                            </div>
+                            <div class="action-details">
+                                <div class="action-title">Clock In/Out</div>
+                                <div class="action-desc">Record attendance</div>
+                            </div>
+                        </button>
+
+                        <button class="action-card" onclick="showNotification('Leave Request page coming soon!', 'info')">
+                            <div class="action-icon request">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                </svg>
+                            </div>
+                            <div class="action-details">
+                                <div class="action-title">Request Leave</div>
+                                <div class="action-desc">Submit new request</div>
+                            </div>
+                        </button>
+
+                        <button class="action-card" onclick="viewSchedule()">
+                            <div class="action-icon schedule">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                            </div>
+                            <div class="action-details">
+                                <div class="action-title">View Schedule</div>
+                                <div class="action-desc">Check work schedule</div>
+                            </div>
+                        </button>
+
+                        <button class="action-card" onclick="showNotification('Reports section coming soon!', 'info')">
+                            <div class="action-icon reports">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M9 11H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-4"/>
+                                    <path d="M19 7V4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+                                </svg>
+                            </div>
+                            <div class="action-details">
+                                <div class="action-title">My Reports</div>
+                                <div class="action-desc">View reports</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Attendance Panel -->
+            <div class="dashboard-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Today's Attendance</h3>
+                    <button class="panel-action" onclick="showNotification('Attendance history coming soon!', 'info')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View History
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="attendance-tracking">
+                        <div class="attendance-row">
+                            <div class="attendance-label">
+                                <svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M12 2v20M2 12h20"/>
+                                </svg>
+                                Clock In Time
+                            </div>
+                            <div class="attendance-value" id="clockInTime">{{ today_attendance.clock_in or '--:--' }}</div>
+                            <div class="attendance-status present" id="clockInStatus">
+                                {{ today_attendance.status or 'Not Clocked In' }}
+                            </div>
+                        </div>
+                        
+                        <div class="attendance-row">
+                            <div class="attendance-label">
+                                <svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M12 2v20M2 12h20"/>
+                                </svg>
+                                Clock Out Time
+                            </div>
+                            <div class="attendance-value" id="clockOutTime">{{ today_attendance.clock_out or '--:--' }}</div>
+                            <div class="attendance-status pending" id="clockOutStatus">
+                                {{ 'Present' if today_attendance.clock_in else 'Pending' }}
+                            </div>
+                        </div>
+                        
+                        <div class="attendance-summary">
+                            <div class="summary-item">
+                                <div class="summary-label">Total Hours</div>
+                                <div class="summary-value" id="totalHours">{{ today_attendance.total_hours or '0.0' }}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Break Time</div>
+                                <div class="summary-value">1.0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities Panel -->
+            <div class="dashboard-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Recent Leave Requests</h3>
+                    <button class="panel-action primary" onclick="showNotification('New Leave Request form coming soon!', 'info')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="16"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                        New Request
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="activity-list">
+                        {% if recent_leave_requests %}
+                            {% for request in recent_leave_requests %}
+                            <div class="activity-item">
+                                <div class="activity-icon {{ request.status.lower() }}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14,2 14,8 20,8"/>
+                                    </svg>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">{{ request.leave_type }}</div>
+                                    <div class="activity-meta">{{ request.start_date }} - {{ request.end_date }}</div>
+                                </div>
+                                <div class="activity-status {{ request.status.lower() }}">
+                                    {{ request.status }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="activity-item">
+                            <div class="activity-icon pending">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12,6 12,12 16,14"/>
+                                </svg>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Annual Leave</div>
+                                <div class="activity-meta">Mar 15 - Mar 17, 2025</div>
+                            </div>
+                            <div class="activity-status pending">Pending</div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon approved">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <polyline points="20,6 9,17 4,12"/>
+                                </svg>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Sick Leave</div>
+                                <div class="activity-meta">Mar 10, 2025</div>
+                            </div>
+                            <div class="activity-status approved">Approved</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Panel -->
+            <div class="dashboard-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Recent Notifications</h3>
+                    <button class="panel-action" onclick="showNotification('Notifications page coming soon!', 'info')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View All
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="notification-list">
+                        <div class="notification-item unread">
+                            <div class="notification-icon approved">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <polyline points="20,6 9,17 4,12"/>
+                                </svg>
+                            </div>
+                            <div class="notification-content">
+                                <div class="notification-title">Leave Request Approved</div>
+                                <div class="notification-desc">Your annual leave request has been approved</div>
+                                <div class="notification-time">2 hours ago</div>
+                            </div>
+                        </div>
+
+                        <div class="notification-item">
+                            <div class="notification-icon info">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                            </div>
+                            <div class="notification-content">
+                                <div class="notification-title">Schedule Update</div>
+                                <div class="notification-desc">Your work schedule for next week is available</div>
+                                <div class="notification-time">1 day ago</div>
+                            </div>
+                        </div>
+
+                        <div class="notification-item">
+                            <div class="notification-icon warning">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                                    <line x1="12" y1="9" x2="12" y2="13"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                            </div>
+                            <div class="notification-content">
+                                <div class="notification-title">System Maintenance</div>
+                                <div class="notification-desc">Scheduled maintenance on Sunday, 2:00 AM</div>
+                                <div class="notification-time">3 days ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/employee_dashboard.js') }}"></script>
+{% endblock %}
