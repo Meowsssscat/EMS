@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request, jsonify, session, redirec
 from datetime import datetime, date, timedelta
 from functools import wraps
 import os
+import calendar
 from supabase import create_client, Client
 
 # Create blueprint
@@ -63,31 +64,44 @@ def get_employee_data():
 def get_attendance_stats(employee_id):
     """Get attendance statistics for employee"""
     try:
-        # Get current month's attendance
-        current_month = date.today().replace(day=1)
-        next_month = (current_month.replace(day=28) + timedelta(days=4)).replace(day=1)
-        
-        response = supabase.table('attendance').select('*').eq('employee_id', employee_id).gte('date', current_month).lt('date', next_month).execute()
-        
-        total_days = len(response.data) if response.data else 0
+        # Get current month range
+        today = date.today()
+        current_month_start = today.replace(day=1)
+        _, last_day = calendar.monthrange(today.year, today.month)
+        current_month_end = today.replace(day=last_day)
+
+        # Get attendance records for the current month
+        response = supabase.table('attendance') \
+            .select('*') \
+            .eq('employee_id', employee_id) \
+            .gte('date', current_month_start) \
+            .lte('date', current_month_end) \
+            .execute()
+
         present_days = len([record for record in response.data if record['status'] == 'present']) if response.data else 0
-        
+
+        # Total working days = number of days in the month (or you can exclude weekends if needed)
+        total_days = last_day  
+
         # Calculate attendance rate
         attendance_rate = (present_days / total_days * 100) if total_days > 0 else 0
-        
+
         # Check if marked today
-        today = date.today()
-        today_response = supabase.table('attendance').select('*').eq('employee_id', employee_id).eq('date', today).execute()
+        today_response = supabase.table('attendance') \
+            .select('*') \
+            .eq('employee_id', employee_id) \
+            .eq('date', today) \
+            .execute()
         marked_today = len(today_response.data) > 0
-        
+
         return {
             'total_days': total_days,
             'present_days': present_days,
             'attendance_rate': round(attendance_rate, 1),
             'marked_today': marked_today,
-            'current_month': current_month.strftime('%B %Y')
+            'current_month': current_month_start.strftime('%B %Y')
         }
-        
+
     except Exception as e:
         print(f"Error fetching attendance stats: {e}")
         return {

@@ -383,6 +383,10 @@ def upload_image():
             'success': False,
             'error': f'Failed to upload image: {str(e)}'
         }), 500
+
+
+@employee_bp.route('/search', methods=['GET'])
+def search_employees():
     """Search employees by name, email, or position"""
     auth_check = require_admin_api()
     if auth_check:
@@ -402,7 +406,7 @@ def upload_image():
         # Get all employees and filter client-side (Supabase doesn't support ILIKE easily)
         response = supabase.table('employees').select(
             'id, name, email, phone, position, department, role, image, created_at, plain_password'
-        ).execute()
+        ).eq('role', 'employee').execute()
         
         if response.data:
             # Filter results
@@ -446,4 +450,84 @@ def upload_image():
         return jsonify({
             'success': False,
             'error': f'Search failed: {str(e)}'
+        }), 500
+
+
+@employee_bp.route('/departments', methods=['GET'])
+def get_departments():
+    """Get list of all departments"""
+    auth_check = require_admin_api()
+    if auth_check:
+        return auth_check
+    
+    try:
+        supabase = get_supabase_client()
+        
+        # Get unique departments from employees table
+        response = supabase.table('employees').select('department').execute()
+        
+        if response.data:
+            departments = []
+            seen = set()
+            
+            for emp in response.data:
+                dept = emp.get('department', '').strip()
+                if dept and dept not in seen:
+                    departments.append(dept)
+                    seen.add(dept)
+            
+            return jsonify({
+                'success': True,
+                'departments': sorted(departments)  # Sort alphabetically
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'departments': []
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to fetch departments: {str(e)}'
+        }), 500
+
+
+@employee_bp.route('/positions', methods=['GET'])
+def get_positions():
+    """Get list of all positions"""
+    auth_check = require_admin_api()
+    if auth_check:
+        return auth_check
+    
+    try:
+        supabase = get_supabase_client()
+        
+        # Get unique positions from employees table
+        response = supabase.table('employees').select('position').execute()
+        
+        if response.data:
+            positions = []
+            seen = set()
+            
+            for emp in response.data:
+                pos = emp.get('position', '').strip()
+                if pos and pos not in seen:
+                    positions.append(pos)
+                    seen.add(pos)
+            
+            return jsonify({
+                'success': True,
+                'positions': sorted(positions)  # Sort alphabetically
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'positions': []
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to fetch positions: {str(e)}'
         }), 500
