@@ -1,10 +1,185 @@
-{% extends "employee_nav_footer_layout.html" %}
-{% block extra_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/employee_dashboard.css') }}">
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard - TRANSCEND BPO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/employee_nav_footer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/employee_profile_modal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/employee_dashboard.css') }}">
+    
+    
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- Logo Section -->
+            <div class="nav-logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="TRANSCEND BPO Logo" class="logo-image">
+                <span class="logo-text">TRANSCEND BPO</span>
+            </div>
 
-{% block content %}
-<div class="main-content">
+            <!-- Desktop Navigation Links -->
+            <div class="nav-links">
+                <a href="{{ url_for('employee_dashboard_temp') }}" class="nav-link" data-page="dashboard">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9,22 9,12 15,12 15,22"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                
+                <a href="{{ url_for('employee_attendance.attendance') }}" class="nav-link" data-page="attendance">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span>Attendance</span>
+                </a>
+                
+                <a href="{{ url_for('employee_leave.leave_requests') }}" class="nav-link" data-page="leave-requests">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10,9 9,9 8,9"/>
+                    </svg>
+                    <span>Leave Request</span>
+                </a>
+            </div>
+
+            <!-- User Profile Section -->
+            <div class="user-profile">
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        {% if employee.image %}
+                            <img src="{{ employee.image }}" alt="{{ employee.full_name }}" class="profile-image">
+                        {% else %}
+                            <span class="profile-initials">{{ employee.first_name[0] }}{{ employee.last_name[0] if employee.last_name else '' }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="profile-details">
+                        <span class="profile-name">{{ employee.full_name or (employee.first_name + ' ' + employee.last_name) }}</span>
+                        <span class="profile-role">{{ employee.position }}</span>
+                    </div>
+                </div>
+                
+                <div class="profile-dropdown">
+                    <button class="dropdown-toggle" id="profileDropdown" aria-label="Profile menu">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"/>
+                        </svg>
+                    </button>
+                    
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <a href="#" class="dropdown-item" id="profileLink">
+                            <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            Profile
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <a href="/logout" class="dropdown-item logout-link">
+                            <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16,17 21,12 16,7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle mobile menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <!-- Mobile Profile Section (Always Visible) -->
+            <div class="mobile-profile">
+                <div class="mobile-profile-info">
+                    <div class="mobile-profile-avatar">
+                        {% if employee.image %}
+                            <img src="{{ employee.image }}" alt="{{ employee.full_name }}" class="mobile-profile-image">
+                        {% else %}
+                            <span class="mobile-profile-initials">{{ employee.first_name[0] }}{{ employee.last_name[0] if employee.last_name else '' }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="mobile-profile-details">
+                        <span class="mobile-profile-name">{{ employee.full_name or (employee.first_name + ' ' + employee.last_name) }}</span>
+                        <span class="mobile-profile-role">{{ employee.position }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile Navigation Links -->
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('employee_dashboard_temp') }}" class="mobile-nav-link">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9,22 9,12 15,12 15,22"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                
+                <a href="{{ url_for('employee_attendance.attendance') }}" class="mobile-nav-link">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span>Attendance</span>
+                </a>
+                
+                <a href="{{ url_for('employee_leave.leave_requests') }}" class="mobile-nav-link">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10,9 9,9 8,9"/>
+                    </svg>
+                    <span>Leave Request</span>
+                </a>
+
+                <!-- Mobile Profile Actions -->
+                <div class="mobile-nav-divider"></div>
+                
+                <a href="#" class="mobile-nav-link" id="mobileProfileLink">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>Profile</span>
+                </a>
+                
+                <a href="/logout" class="mobile-nav-link logout-link">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16,17 21,12 16,7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
     <div class="content-container">
         <!-- Welcome Hero Section -->
         <div class="welcome-hero">
@@ -258,8 +433,92 @@
     </div>
 </div>
 
-{% endblock %}
 
-{% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/employee_dashboard.js') }}"></script>
-{% endblock %}
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; 2025 TRANSCEND BPO. All rights reserved.</p>
+                </div>
+                <div class="footer-right">
+                    <p class="footer-tagline">Secure • Reliable • Professional</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+
+    <!-- Employee Profile Modal -->
+    <div class="profile-modal-overlay" id="profileModal">
+        <div class="profile-modal">
+            <div class="profile-modal-header">
+                <h2 class="profile-modal-title">Profile</h2>
+                <button class="profile-modal-close" id="closeProfileModal" aria-label="Close profile modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="profile-modal-body">
+                <div class="profile-modal-avatar">
+                    {% if employee.image %}
+                        <img src="{{ employee.image }}" alt="{{ employee.full_name }}" class="modal-profile-image" id="modalProfileImage">
+                    {% else %}
+                        <div class="modal-profile-initials" id="modalProfileInitials">
+                            {{ employee.first_name[0] }}{{ employee.last_name[0] if employee.last_name else '' }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="profile-modal-details">
+                    
+                    
+                    <div class="profile-detail-row">
+                        <div class="profile-detail-label">Full Name</div>
+                        <div class="profile-detail-value" id="modalFullName">{{ employee.full_name or 'N/A' }}</div>
+                    </div>
+                    
+                    <div class="profile-detail-row">
+                        <div class="profile-detail-label">Email Address</div>
+                        <div class="profile-detail-value" id="modalEmail">{{ employee.email or 'N/A' }}</div>
+                    </div>
+                    
+                    <div class="profile-detail-row">
+                        <div class="profile-detail-label">Phone Number</div>
+                        <div class="profile-detail-value" id="modalPhone">{{ employee.phone or 'N/A' }}</div>
+                    </div>
+                    
+                    <div class="profile-detail-row">
+                        <div class="profile-detail-label">Position</div>
+                        <div class="profile-detail-value" id="modalPosition">{{ employee.position or 'N/A' }}</div>
+                    </div>
+                    
+                    <div class="profile-detail-row">
+                        <div class="profile-detail-label">Department</div>
+                        <div class="profile-detail-value" id="modalDepartment">{{ employee.department or 'N/A' }}</div>
+                    </div>
+                    
+                    <div class="profile-detail-row">
+                        <div class="profile-detail-label">Hire Date</div>
+                        <div class="profile-detail-value" id="modalHireDate">{{ employee.hire_date or 'N/A' }}</div>
+                    </div>
+                    
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/employee_nav_footer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/employee_profile_modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/employee_dashboard.js') }}"></script>
+    
+</body>
+</html>
