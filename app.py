@@ -166,7 +166,7 @@ def login():
                     session['user_name'] = user_data['name']
 
                     if user_data['role'] == 'admin':
-                        return redirect(url_for('employee_dashboard_temp'))  # Use the temporary route
+                        return redirect(url_for('admin_dashboard.dashboard'))  # Use the temporary route
                     else:
                         # FIXED: Use the correct blueprint endpoint
                         return redirect(url_for('employee_dashboard_temp'))  # Use the temporary route  # Changed this line
