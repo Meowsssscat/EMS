@@ -42,7 +42,7 @@ if not app.debug:
     app.logger.setLevel(logging.INFO)
 
 
-app.supabase = supabase
+
 
 from employee_management import employee_bp  # This should work now
 from employee_attendance import employee_attendance_bp
@@ -62,6 +62,8 @@ app.register_blueprint(leave_requests_bp)
 
 # Initialize admin dashboard with proper supabase client
 init_admin_dashboard(app, supabase)
+
+app.supabase = supabase
 
 @app.route('/')
 def home():
