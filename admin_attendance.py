@@ -5,15 +5,12 @@ import os
 from functools import wraps
 import uuid
 
-# Create Blueprint
 admin_attendance_bp = Blueprint('admin_attendance', __name__)
 
-# Supabase client
 url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_SERVICE_KEY")
 supabase: Client = create_client(url, key)
 
-# Admin authentication decorator
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -28,23 +25,18 @@ def admin_required(f):
 def attendance():
     """Main attendance page for admin"""
     try:
-        # Get all employees
         employees_response = supabase.table('employees').select('id, name, department, position, status').eq('role', 'employee').order('name').execute()
         employees = employees_response.data if employees_response.data else []
         
-        # Get today's date
         today = date.today()
         
-        # Get attendance statistics for today
         attendance_response = supabase.table('attendance').select('employee_id, status').eq('date', today.isoformat()).execute()
         attendance_today = attendance_response.data if attendance_response.data else []
         
-        # Calculate statistics
         total_present = len([a for a in attendance_today if a['status'] == 'present'])
         total_absent = len([a for a in attendance_today if a['status'] == 'absent'])
         total_late = len([a for a in attendance_today if a['status'] == 'late'])
         
-        # Get total active employees
         total_employees = len([e for e in employees if e['status'] == 'active'])
         
         stats = {
@@ -55,7 +47,6 @@ def attendance():
             'not_marked': total_employees - len(attendance_today)
         }
         
-        # Get recent attendance data (last 7 days)
         seven_days_ago = (today - timedelta(days=7)).isoformat()
         recent_attendance_response = supabase.table('attendance').select('*, employees(name, department)').gte('date', seven_days_ago).order('date', desc=True).order('employees(name)').limit(50).execute()
         
@@ -95,24 +86,20 @@ def mark_attendance():
         status = data.get('status')
         attendance_date = data.get('date')
         
-        # Validate inputs
         if not employee_id or not status or not attendance_date:
             return jsonify({'success': False, 'message': 'Missing required fields'})
         
         if status not in ['present', 'absent', 'late']:
             return jsonify({'success': False, 'message': 'Invalid status'})
         
-        # Parse date
         try:
             attendance_date = datetime.strptime(attendance_date, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'success': False, 'message': 'Invalid date format'})
         
-        # Check if date is not in future
         if attendance_date > date.today():
             return jsonify({'success': False, 'message': 'Cannot mark attendance for future dates'})
         
-        # Check if employee exists and is active
         employee_response = supabase.table('employees').select('id, name').eq('id', employee_id).eq('role', 'employee').eq('status', 'active').execute()
         
         if not employee_response.data:
@@ -120,11 +107,9 @@ def mark_attendance():
         
         employee = employee_response.data[0]
         
-        # Check if attendance record already exists
         existing_response = supabase.table('attendance').select('id').eq('employee_id', employee_id).eq('date', attendance_date.isoformat()).execute()
         
         if existing_response.data:
-            # Update existing record
             update_response = supabase.table('attendance').update({
                 'status': status,
                 'created_at': datetime.now().isoformat()
@@ -136,7 +121,6 @@ def mark_attendance():
                     'message': f'Attendance updated to {status} for {employee["name"]}'
                 })
         else:
-            # Insert new record
             insert_response = supabase.table('attendance').insert({
                 'employee_id': employee_id,
                 'date': attendance_date.isoformat(),
@@ -165,7 +149,6 @@ def filter_attendance():
         end_date = request.args.get('end_date')
         status = request.args.get('status')
         
-        # Build query
         query = supabase.table('attendance').select('id, date, status, created_at, employees(name, department, position)')
         
         if employee_id:
@@ -211,20 +194,17 @@ def bulk_mark_attendance():
         status = data.get('status')
         attendance_date = data.get('date')
         
-        # Validate inputs
         if not employee_ids or not status or not attendance_date:
             return jsonify({'success': False, 'message': 'Missing required fields'})
         
         if status not in ['present', 'absent', 'late']:
             return jsonify({'success': False, 'message': 'Invalid status'})
         
-        # Parse date
         try:
             attendance_date = datetime.strptime(attendance_date, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'success': False, 'message': 'Invalid date format'})
         
-        # Check if date is not in future
         if attendance_date > date.today():
             return jsonify({'success': False, 'message': 'Cannot mark attendance for future dates'})
         
@@ -233,24 +213,20 @@ def bulk_mark_attendance():
         
         for employee_id in employee_ids:
             try:
-                # Check if employee exists and is active
                 employee_response = supabase.table('employees').select('name').eq('id', employee_id).eq('role', 'employee').eq('status', 'active').execute()
                 
                 if not employee_response.data:
                     failed_employees.append(f"Employee {employee_id} not found")
                     continue
                 
-                # Check if record exists
                 existing_response = supabase.table('attendance').select('id').eq('employee_id', employee_id).eq('date', attendance_date.isoformat()).execute()
                 
                 if existing_response.data:
-                    # Update existing
                     supabase.table('attendance').update({
                         'status': status,
                         'created_at': datetime.now().isoformat()
                     }).eq('employee_id', employee_id).eq('date', attendance_date.isoformat()).execute()
                 else:
-                    # Insert new
                     supabase.table('attendance').insert({
                         'employee_id': employee_id,
                         'date': attendance_date.isoformat(),
@@ -291,7 +267,6 @@ def attendance_report():
         if not start_date or not end_date:
             return jsonify({'success': False, 'message': 'Start date and end date are required'})
         
-        # Get employees
         employees_query = supabase.table('employees').select('id, name, department, position').eq('role', 'employee').eq('status', 'active')
         
         if employee_id:
@@ -300,11 +275,9 @@ def attendance_report():
         employees_response = employees_query.execute()
         employees = employees_response.data if employees_response.data else []
         
-        # Get attendance data for the period
         attendance_response = supabase.table('attendance').select('employee_id, status').gte('date', start_date).lte('date', end_date).execute()
         attendance_data = attendance_response.data if attendance_response.data else []
         
-        # Process report data
         report = []
         for employee in employees:
             emp_attendance = [a for a in attendance_data if a['employee_id'] == employee['id']]
@@ -314,13 +287,12 @@ def attendance_report():
             late_days = len([a for a in emp_attendance if a['status'] == 'late'])
             total_marked_days = len(emp_attendance)
             
-            # Calculate working days
             start = datetime.strptime(start_date, '%Y-%m-%d').date()
             end = datetime.strptime(end_date, '%Y-%m-%d').date()
             working_days = 0
             current = start
             while current <= end:
-                if current.weekday() < 5:  # Monday to Friday
+                if current.weekday() < 5: 
                     working_days += 1
                 current += timedelta(days=1)
             

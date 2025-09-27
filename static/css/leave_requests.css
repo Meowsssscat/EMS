@@ -1,14 +1,5 @@
-/* ==========================================================================
-   EMS Leave Requests - Professional Leave Management System
-   Color Palette: Navy #1A237E, Gray #F5F5F5, Text Colors
-   ========================================================================== */
-
-/* ==========================================================================
-   CSS Variables
-   ========================================================================== */
 
 :root {
-    /* Colors */
     --primary-navy: #1A237E;
     --primary-gray: #F5F5F5;
     --text-primary: #212121;
@@ -16,14 +7,12 @@
     --text-light: #FFFFFF;
     --gray-dark: #E0E0E0;
     
-    /* Additional UI Colors */
     --success-green: #4CAF50;
     --warning-orange: #FF9800;
     --error-red: #F44336;
     --border-light: #EEEEEE;
     --shadow-color: rgba(0, 0, 0, 0.1);
     
-    /* Spacing */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
@@ -31,7 +20,6 @@
     --spacing-xl: 32px;
     --spacing-xxl: 48px;
     
-    /* Typography */
     --font-size-xs: 12px;
     --font-size-sm: 14px;
     --font-size-base: 16px;
@@ -40,19 +28,16 @@
     --font-size-2xl: 24px;
     --font-size-3xl: 30px;
     
-    /* Border Radius */
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
     --radius-xl: 16px;
     
-    /* Shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
     
-    /* Transitions */
     --transition-fast: all 0.15s ease;
     --transition-smooth: all 0.3s ease;
 }

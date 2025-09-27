@@ -1,6 +1,5 @@
-/* Employee Management Styles */
+
 :root {
-    /* Color Palette */
     --primary-navy: #1A237E;
     --primary-gray: #F5F5F5;
     --text-primary: #212121;
@@ -8,24 +7,20 @@
     --text-light: #FFFFFF;
     --gray-dark: #E0E0E0;
 
-    /* Additional Colors for Enhanced UI */
     --success: #4CAF50;
     --warning: #FF9800;
     --danger: #F44336;
     --info: #2196F3;
 
-    /* Shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
     --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
 
-    /* Animations */
     --transition-fast: 0.15s ease;
     --transition-normal: 0.3s ease;
     --transition-slow: 0.5s ease;
 
-    /* Spacing */
     --space-xs: 0.5rem;
     --space-sm: 1rem;
     --space-md: 1.5rem;
@@ -33,7 +28,6 @@
     --space-xl: 3rem;
 }
 
-/* Container and Layout */
 .employee-management-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -42,7 +36,6 @@
     min-height: 100vh;
 }
 
-/* Page Header */
 .page-header {
     display: flex;
     justify-content: space-between;

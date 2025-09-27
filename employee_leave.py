@@ -4,18 +4,14 @@ from datetime import datetime, date
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Create blueprint
 employee_leave_bp = Blueprint('employee_leave', __name__, url_prefix='/employee')
 
-# Supabase client
 url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_SERVICE_KEY")
 supabase: Client = create_client(url, key)
 
-# Leave types configuration
 LEAVE_TYPES = [
     {'value': 'vacation', 'label': 'Annual Leave/Vacation'},
     {'value': 'sick', 'label': 'Sick Leave'},
@@ -73,7 +69,6 @@ def calculate_leave_days(start_date, end_date):
 def get_leave_stats(employee_id):
     """Get leave statistics for employee"""
     try:
-        # Get all leave requests for current year
         current_year = datetime.now().year
         response = supabase.table('leave_requests').select('*').eq('employee_id', employee_id).execute()
         
@@ -95,7 +90,7 @@ def get_leave_stats(employee_id):
             'total_requested': total_requested,
             'approved_days': approved_days,
             'pending_requests': pending_requests,
-            'remaining_balance': max(0, 20 - approved_days)  # Assuming 20 days annual leave
+            'remaining_balance': max(0, 20 - approved_days)
         }
     except Exception as e:
         print(f"Error calculating leave stats: {e}")
@@ -117,7 +112,6 @@ def leave_requests():
         if not employee:
             return redirect(url_for('login'))
         
-        # Get employee's leave requests
         response = supabase.table('leave_requests').select('*').eq('employee_id', employee['employee_id']).order('created_at', desc=True).execute()
         
         leave_history = []
@@ -137,7 +131,6 @@ def leave_requests():
                 'leave_days': leave_days
             })
         
-        # Get leave statistics
         leave_stats = get_leave_stats(employee['employee_id'])
         
         return render_template('employee_leave.html',
@@ -160,7 +153,6 @@ def submit_leave_request():
     try:
         data = request.get_json()
         
-        # Validate required fields
         required_fields = ['leave_type', 'start_date', 'end_date', 'reason']
         for field in required_fields:
             if not data.get(field):
@@ -171,27 +163,22 @@ def submit_leave_request():
         end_date = data['end_date']
         reason = data['reason'].strip()
         
-        # Validate leave type
         valid_leave_types = [lt['value'] for lt in LEAVE_TYPES]
         if leave_type not in valid_leave_types:
             return jsonify({'success': False, 'error': 'Invalid leave type'}), 400
         
-        # Validate dates
         try:
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'success': False, 'error': 'Invalid date format'}), 400
         
-        # Check if start date is not in the past
         if start_date_obj < date.today():
             return jsonify({'success': False, 'error': 'Start date cannot be in the past'}), 400
         
-        # Check if end date is after start date
         if end_date_obj < start_date_obj:
             return jsonify({'success': False, 'error': 'End date must be after start date'}), 400
         
-        # Check for overlapping leave requests
         employee_id = session['user_id']
         overlap_response = supabase.table('leave_requests').select('*').eq('employee_id', employee_id).neq('status', 'rejected').execute()
         
@@ -199,14 +186,11 @@ def submit_leave_request():
             existing_start = datetime.strptime(existing_leave['start_date'], '%Y-%m-%d').date()
             existing_end = datetime.strptime(existing_leave['end_date'], '%Y-%m-%d').date()
             
-            # Check for overlap
             if not (end_date_obj < existing_start or start_date_obj > existing_end):
                 return jsonify({'success': False, 'error': 'Leave request overlaps with existing request'}), 400
         
-        # Calculate leave days
         leave_days = calculate_leave_days(start_date, end_date)
         
-        # Insert leave request
         leave_request_data = {
             'employee_id': employee_id,
             'leave_type': leave_type,
@@ -252,7 +236,6 @@ def leave_history():
     try:
         employee_id = session['user_id']
         
-        # Get leave requests
         response = supabase.table('leave_requests').select('*').eq('employee_id', employee_id).order('created_at', desc=True).execute()
         
         leave_history = []
@@ -272,7 +255,6 @@ def leave_history():
                 'leave_days': leave_days
             })
         
-        # Get updated stats
         leave_stats = get_leave_stats(employee_id)
         
         return jsonify({
@@ -313,7 +295,6 @@ def cancel_leave_request(leave_id):
     try:
         employee_id = session['user_id']
         
-        # Check if leave request exists and belongs to employee
         response = supabase.table('leave_requests').select('*').eq('id', leave_id).eq('employee_id', employee_id).execute()
         
         if not response.data:
@@ -321,11 +302,9 @@ def cancel_leave_request(leave_id):
         
         leave_request = response.data[0]
         
-        # Can only cancel pending requests
         if leave_request['status'] != 'pending':
             return jsonify({'success': False, 'error': 'Can only cancel pending requests'}), 400
         
-        # Delete the leave request
         delete_response = supabase.table('leave_requests').delete().eq('id', leave_id).execute()
         
         if delete_response.data:

@@ -58,7 +58,6 @@ def get_stats():
     try:
         supabase = get_supabase_client()
         
-        # Get real-time stats
         employees_response = supabase.table('employees').select('id, status').execute()
         
         stats = {

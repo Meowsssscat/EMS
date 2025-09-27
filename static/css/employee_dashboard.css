@@ -1,11 +1,5 @@
-/* ==========================================================================
-   EMS Employee Dashboard - Professional Styling
-   Color Palette: Navy #1A237E, Gray #F5F5F5, Text Colors
-   ========================================================================== */
 
-/* CSS Variables */
 :root {
-    /* Color Palette */
     --primary-navy: #1A237E;
     --primary-gray: #F5F5F5;
     --text-primary: #212121;
@@ -13,22 +7,18 @@
     --text-light: #FFFFFF;
     --gray-dark: #E0E0E0;
     
-    /* Status colors */
     --success-color: #4CAF50;
     --warning-color: #FF9800;
     --error-color: #F44336;
     --info-color: #2196F3;
     
-    /* Shadows */
     --shadow-sm: 0 2px 4px rgba(26, 35, 126, 0.08);
     --shadow-md: 0 4px 12px rgba(26, 35, 126, 0.12);
     --shadow-lg: 0 8px 24px rgba(26, 35, 126, 0.15);
     
-    /* Transitions */
     --transition-fast: 0.15s ease;
     --transition-smooth: 0.3s ease;
     
-    /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
@@ -36,13 +26,11 @@
     --spacing-xl: 2rem;
     --spacing-xxl: 3rem;
     
-    /* Border Radius */
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
     --radius-xl: 20px;
     
-    /* Typography */
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;
     --font-size-base: 1rem;
@@ -51,7 +39,6 @@
     --font-size-2xl: 1.75rem;
     --font-size-3xl: 2.5rem;
     
-    /* Layout */
     --content-max-width: 1400px;
     --panel-padding: 2rem;
 }

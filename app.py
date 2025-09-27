@@ -1,5 +1,3 @@
-# app.py
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from supabase import create_client, Client
 from datetime import datetime, timedelta, date
@@ -11,26 +9,19 @@ import calendar
 
 
 
-# Replace the blueprint import section in your app.py with this:
 
-# Add logging configuration for debugging
 
-# Load env
 load_dotenv()
 
-# Create Flask app
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
 
-# Supabase client
 url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_SERVICE_KEY")
 supabase: Client = create_client(url, key)
 
-# Add this line immediately after creating supabase client
 app.supabase = supabase
 
-# Authentication decorator
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -47,7 +38,7 @@ if not app.debug:
 
 
 
-from employee_management import employee_bp  # This should work now
+from employee_management import employee_bp  
 from employee_attendance import employee_attendance_bp
 from employee_leave import employee_leave_bp
 from admin_attendance import admin_attendance_bp
@@ -55,9 +46,9 @@ from admin_leave_requests import leave_requests_bp
 from admin_dashboard import init_admin_dashboard
 from admin_dashboard_routes import admin_bp
 
-# Register all blueprints
+
 app.register_blueprint(admin_bp)
-app.register_blueprint(employee_bp)  # Fixed employee blueprint
+app.register_blueprint(employee_bp) 
 app.register_blueprint(employee_attendance_bp)
 app.register_blueprint(employee_leave_bp)
 app.register_blueprint(admin_attendance_bp)
@@ -66,15 +57,12 @@ app.register_blueprint(leave_requests_bp)
 
 
 
-# Debug: Print all registered routes
 print("=== REGISTERED ROUTES DEBUG ===")
 for rule in app.url_map.iter_rules():
     print(f"Route: {rule.rule} -> Endpoint: {rule.endpoint} -> Methods: {rule.methods}")
 
-# Debug: Check if employee_dashboard blueprint was registered
 print(f"Registered blueprints: {list(app.blueprints.keys())}")
 
-# Debug: Check if the specific endpoint exists
 try:
     url = url_for('employee_dashboard.dashboard')
     print(f"employee_dashboard.dashboard URL: {url}")
@@ -83,7 +71,6 @@ except Exception as e:
 
 print("=== END ROUTES DEBUG ===")
 
-# Also add a temporary test route in your blueprint to see if it's working
 @app.route('/test-employee-blueprint')
 def test_employee_blueprint():
     return jsonify({
@@ -94,7 +81,6 @@ def test_employee_blueprint():
 
 
 
-# Initialize admin dashboard with proper supabase client
 init_admin_dashboard(app, supabase)
 
 
@@ -116,7 +102,6 @@ def employee_dashboard_temp():
         return redirect(url_for('login'))
     
     try:
-        # Get employee data using the functions from app.py
         employee = get_employee_data()
         if not employee:
             flash('Employee profile not found')
@@ -145,7 +130,6 @@ def employee_dashboard_temp():
 def home():
     return redirect(url_for('login'))
 
-# In your app.py, replace the login route with this:
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -166,10 +150,9 @@ def login():
                     session['user_name'] = user_data['name']
 
                     if user_data['role'] == 'admin':
-                        return redirect(url_for('admin_dashboard.dashboard'))  # Use the temporary route
+                        return redirect(url_for('admin_dashboard.dashboard'))
                     else:
-                        # FIXED: Use the correct blueprint endpoint
-                        return redirect(url_for('employee_dashboard_temp'))  # Use the temporary route  # Changed this line
+                        return redirect(url_for('employee_dashboard_temp'))  
                 else:
                     flash('Invalid password')
             else:
@@ -193,7 +176,6 @@ def get_employee_data():
         if not user_id:
             return None
             
-        # Fetch complete employee data from database
         response = supabase.table('employees').select('*').eq('id', user_id).execute()
         
         if response.data:
@@ -228,32 +210,25 @@ def get_employee_statistics():
         if not user_id:
             return default_stats()
             
-        # Calculate attendance rate for current month
         current_month_start = datetime.now().replace(day=1).date()
         today = datetime.now().date()
         
-        # Get attendance records for current month
         attendance_response = supabase.table('attendance').select('*').eq('employee_id', user_id).gte('date', current_month_start.isoformat()).lte('date', today.isoformat()).execute()
         
-        # FIXED: Calculate working days correctly (inclusive of today)
         working_days = 0
         current_date = current_month_start
         while current_date <= today:
-            if current_date.weekday() < 5:  # Monday = 0, Friday = 4
+            if current_date.weekday() < 5:  
                 working_days += 1
             current_date += timedelta(days=1)
         
-        # FIXED: Count present days more accurately - debug what statuses you actually have
         present_days = len([a for a in attendance_response.data if a.get('status') in ['present', 'completed']])
         
-        # DEBUG: Print actual data to see what's wrong
         print(f"DEBUG: Working days: {working_days}, Present days: {present_days}")
         print(f"DEBUG: Attendance data: {attendance_response.data}")
         
-        # Calculate attendance rate
         attendance_rate = (present_days / working_days * 100) if working_days > 0 else 0
         
-        # Get previous month for trend calculation
         prev_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
         prev_month_end = current_month_start - timedelta(days=1)
         
@@ -270,13 +245,11 @@ def get_employee_statistics():
         prev_attendance_rate = (prev_present_days / prev_working_days * 100) if prev_working_days > 0 else 0
         attendance_trend = round(attendance_rate - prev_attendance_rate, 1)
         
-        # FIXED: Get leave balance with better debugging
         current_year = datetime.now().year
-        total_allocated = 20  # Default annual leave
+        total_allocated = 20  
         
         leave_used_response = supabase.table('leave_requests').select('start_date, end_date, status, leave_type').eq('employee_id', user_id).eq('status', 'approved').gte('start_date', f'{current_year}-01-01').lte('end_date', f'{current_year}-12-31').execute()
 
-        # DEBUG: Print leave data
         print(f"DEBUG: Leave requests: {leave_used_response.data}")
         
         total_used = 0
@@ -295,11 +268,9 @@ def get_employee_statistics():
         
         print(f"DEBUG: Total allocated: {total_allocated}, Total used: {total_used}, Balance: {leave_balance}")
         
-        # Count pending requests
         pending_response = supabase.table('leave_requests').select('id').eq('employee_id', user_id).eq('status', 'pending').execute()
         pending_requests = len(pending_response.data) if pending_response.data else 0
         
-        # Get department size
         employee_data = get_employee_data()
         department_size = 1
         if employee_data and employee_data.get('department'):
@@ -344,7 +315,6 @@ def get_today_attendance():
         if response.data:
             data = response.data[0]
             
-            # Create attendance object
             class TodayAttendance:
                 def __init__(self, attendance_data):
                     self.clock_in = None
@@ -352,21 +322,18 @@ def get_today_attendance():
                     self.total_hours = 0.0
                     self.status = attendance_data.get('status', 'pending')
                     
-                    # Parse clock in time
                     if attendance_data.get('clock_in_time'):
                         try:
                             self.clock_in = datetime.fromisoformat(attendance_data['clock_in_time'].replace('Z', ''))
                         except:
                             pass
                     
-                    # Parse clock out time
                     if attendance_data.get('clock_out_time'):
                         try:
                             self.clock_out = datetime.fromisoformat(attendance_data['clock_out_time'].replace('Z', ''))
                         except:
                             pass
                     
-                    # Calculate total hours
                     if self.clock_in and self.clock_out:
                         time_diff = self.clock_out - self.clock_in
                         self.total_hours = round(time_diff.total_seconds() / 3600, 2)
@@ -388,24 +355,20 @@ def get_recent_leave_requests():
         if not user_id:
             return []
             
-        # The query should select the 'leave_type' column if it exists in the 'leave_requests' table.
-        # It's good practice to explicitly select all necessary columns.
         response = supabase.table('leave_requests').select('id, start_date, end_date, status, leave_type').eq('employee_id', user_id).order('created_at', desc=True).limit(5).execute()
         
         if response.data:
             requests = []
             for req in response.data:
-                # Create leave request object
                 class LeaveRequest:
                     def __init__(self, data):
                         self.id = data['id']
                         self.start_date = datetime.fromisoformat(data['start_date']).date() if data.get('start_date') else None
                         self.end_date = datetime.fromisoformat(data['end_date']).date() if data.get('end_date') else None
                         self.status = data.get('status', 'pending')
-                        self.leave_type = data.get('leave_type', 'Annual')  # <-- ADD THIS LINE
+                        self.leave_type = data.get('leave_type', 'Annual')  
                         self.days = data.get('days', 1)
                         
-                        # Calculate days from date range since 'days' column doesn't exist
                         if self.start_date and self.end_date:
                             self.days = (self.end_date - self.start_date).days + 1
                         else:
@@ -421,7 +384,6 @@ def get_recent_leave_requests():
         print(f"Error getting leave requests: {e}")
         return []
 
-# Update your existing employee/clock route
 @app.route('/employee/clock', methods=['POST'])
 @login_required
 def employee_clock():
@@ -436,15 +398,12 @@ def employee_clock():
         
         user_id = session['user_id']
         
-        # Convert timestamp
         clock_time = datetime.fromisoformat(data['timestamp'].replace('Z', ''))
         today = clock_time.date().isoformat()
         
-        # Check if attendance record exists for today
         attendance_response = supabase.table('attendance').select('*').eq('employee_id', user_id).eq('date', today).execute()
         
         if not attendance_response.data:
-            # Create new attendance record for clock in
             attendance_data = {
                 'employee_id': user_id,
                 'date': today,
@@ -455,7 +414,6 @@ def employee_clock():
             response = supabase.table('attendance').insert(attendance_data).execute()
             
             if response.data:
-                # Create notification if notifications table exists
                 try:
                     supabase.table('notifications').insert({
                         'employee_id': user_id,
@@ -466,7 +424,7 @@ def employee_clock():
                         'created_at': datetime.now().isoformat()
                     }).execute()
                 except:
-                    pass  # Notifications table might not exist
+                    pass 
                 
                 return jsonify({
                     'success': True,
@@ -476,11 +434,9 @@ def employee_clock():
                 })
         
         else:
-            # Update existing record for clock out
             attendance_record = attendance_response.data[0]
             
             if attendance_record.get('clock_in_time') and not attendance_record.get('clock_out_time'):
-                # Calculate total hours
                 clock_in_time = datetime.fromisoformat(attendance_record['clock_in_time'].replace('Z', ''))
                 time_diff = clock_time - clock_in_time
                 total_hours = round(time_diff.total_seconds() / 3600, 2)
@@ -494,7 +450,6 @@ def employee_clock():
                 response = supabase.table('attendance').update(update_data).eq('id', attendance_record['id']).execute()
                 
                 if response.data:
-                    # Create notification
                     try:
                         supabase.table('notifications').insert({
                             'employee_id': user_id,
@@ -533,30 +488,24 @@ def get_employee_stats():
         if not user_id:
             return default_stats()
             
-        # Calculate attendance rate for current month
         current_month_start = datetime.now().replace(day=1).date()
         today = datetime.now().date()
         
-        # Get attendance records for current month
         try:
             attendance_response = supabase.table('attendance').select('*').eq('employee_id', user_id).gte('date', current_month_start.isoformat()).lte('date', today.isoformat()).execute()
         except:
             return default_stats()
         
-        # FIXED: Calculate total days in the month (like your working attendance code)
-        # For September: total days = 30 (regardless of what day today is)  
+       
         import calendar
         _, total_days_in_month = calendar.monthrange(today.year, today.month)
         
-        # Count present days
         present_days = len([a for a in attendance_response.data if a.get('status') in ['present', 'completed']])
         
-        # FIXED: Calculate attendance rate based on total calendar days
         attendance_rate = (present_days / total_days_in_month * 100) if total_days_in_month > 0 else 0
         
-        # FIXED: Get leave balance with debugging
         current_year = datetime.now().year
-        total_allocated = 20  # Default annual leave
+        total_allocated = 20  
         
         try:
             leave_used_response = supabase.table('leave_requests').select('start_date, end_date, status').eq('employee_id', user_id).eq('status', 'approved').gte('start_date', f'{current_year}-01-01').lte('end_date', f'{current_year}-12-31').execute()
@@ -578,14 +527,12 @@ def get_employee_stats():
         
         leave_balance = max(0, total_allocated - total_used)
         
-        # Count pending requests
         try:
             pending_response = supabase.table('leave_requests').select('id').eq('employee_id', user_id).eq('status', 'pending').execute()
             pending_requests = len(pending_response.data) if pending_response.data else 0
         except:
             pending_requests = 0
         
-        # Get department size
         employee_data = get_employee_data()
         department_size = 1
         if employee_data and employee_data.get('department'):
@@ -597,7 +544,7 @@ def get_employee_stats():
         
         return {
             'attendance_rate': round(attendance_rate, 1),
-            'attendance_trend': 0,  # Will calculate later when we have more data
+            'attendance_trend': 0,  
             'leave_balance': leave_balance,
             'total_leave_days': total_allocated,
             'pending_requests': pending_requests,
@@ -621,7 +568,7 @@ def employee_dashboard_simple():
     """Simple employee redirect"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return redirect(url_for('employee_dashboard.dashboard'))  # Redirect to blueprint route
+    return redirect(url_for('employee_dashboard.dashboard'))  
 
 
 # # Employee Dashboard Routes
@@ -710,7 +657,6 @@ def employee_profile_page():
         flash('Error loading profile page')
         return redirect(url_for('employee_dashboard.dashboard'))
 
-# Custom Jinja2 filter for date parsing
 def strptime_filter(date_string, format_string):
     """Parse date string using strptime"""
     try:
@@ -722,17 +668,14 @@ def strftime_filter(date_obj, format_string):
     """Format date object using strftime"""
     try:
         if isinstance(date_obj, str):
-            # If it's a string, try to parse it first
             date_obj = datetime.strptime(date_obj, '%Y-%m-%d')
         return date_obj.strftime(format_string)
     except (ValueError, TypeError, AttributeError):
-        return date_obj  # Return original if formatting fails
+        return date_obj 
 
-# Register the custom filters
 app.jinja_env.filters['strptime'] = strptime_filter
 app.jinja_env.filters['strftime'] = strftime_filter
 
-# Also add a helper filter for date formatting that's commonly needed
 def format_date(date_string, input_format='%Y-%m-%d', output_format='%B %d, %Y'):
     """Convert date string from one format to another"""
     try:

@@ -33,13 +33,11 @@ def list_employees():
     try:
         supabase = get_supabase_client()
         
-        # Select employee fields but exclude admin users
         response = supabase.table('employees').select(
             'id, name, email, phone, position, department, role, image, created_at, plain_password, password_hash'
         ).eq('role', 'employee').execute()
         
         if response.data:
-            # Format the data for frontend consumption
             employees = []
             for emp in response.data:
                 employees.append({
@@ -85,7 +83,6 @@ def add_employee():
     try:
         data = request.get_json()
         
-        # Validate required fields
         required_fields = ['name', 'email', 'password']
         for field in required_fields:
             if not data.get(field):
@@ -94,7 +91,6 @@ def add_employee():
                     'error': f'Field "{field}" is required'
                 }), 400
         
-        # Check if email already exists
         supabase = get_supabase_client()
         existing = supabase.table('employees').select('id').eq('email', data['email']).execute()
         
@@ -104,17 +100,15 @@ def add_employee():
                 'error': 'Employee with this email already exists'
             }), 400
         
-        # Hash the password
         plain_password = data['password']
         password_hash = generate_password_hash(plain_password)
         
-        # Prepare employee data
         employee_data = {
-            'id': str(uuid.uuid4()),  # Generate UUID for new employee
+            'id': str(uuid.uuid4()),
             'name': data['name'].strip(),
             'email': data['email'].strip().lower(),
             'password_hash': password_hash,
-            'plain_password': plain_password,  # Store plain password for admin visibility
+            'plain_password': plain_password,
             'role': data.get('role', 'employee'),
             'department': data.get('department', ''),
             'position': data.get('position', ''),
@@ -124,7 +118,6 @@ def add_employee():
             'created_at': datetime.utcnow().isoformat()
         }
         
-        # Insert into database
         response = supabase.table('employees').insert(employee_data).execute()
         
         if response.data:
@@ -163,7 +156,6 @@ def update_employee(employee_id):
     try:
         data = request.get_json()
         
-        # Validate required fields
         if not data.get('name'):
             return jsonify({
                 'success': False,
@@ -172,7 +164,6 @@ def update_employee(employee_id):
         
         supabase = get_supabase_client()
         
-        # Check if employee exists
         existing = supabase.table('employees').select('*').eq('id', employee_id).execute()
         
         if not existing.data:
@@ -183,7 +174,6 @@ def update_employee(employee_id):
         
         current_employee = existing.data[0]
         
-        # Prepare update data
         update_data = {
             'name': data['name'].strip(),
             'role': data.get('role', current_employee.get('role', 'employee')),
@@ -193,7 +183,6 @@ def update_employee(employee_id):
             'image': data.get('image', current_employee.get('image', ''))
         }
         
-        # Handle email update (check for duplicates)
         if data.get('email') and data['email'].strip().lower() != current_employee.get('email', '').lower():
             email_check = supabase.table('employees').select('id').eq('email', data['email'].strip().lower()).execute()
             if email_check.data:
@@ -203,14 +192,12 @@ def update_employee(employee_id):
                 }), 400
             update_data['email'] = data['email'].strip().lower()
         
-        # Handle password update if provided
         if data.get('password') and data['password'].strip():
             plain_password = data['password'].strip()
             password_hash = generate_password_hash(plain_password)
             update_data['password_hash'] = password_hash
             update_data['plain_password'] = plain_password
         
-        # Update in database
         response = supabase.table('employees').update(update_data).eq('id', employee_id).execute()
         
         if response.data:
@@ -249,7 +236,6 @@ def delete_employee(employee_id):
     try:
         supabase = get_supabase_client()
         
-        # Check if employee exists
         existing = supabase.table('employees').select('id, name').eq('id', employee_id).execute()
         
         if not existing.data:
@@ -260,10 +246,8 @@ def delete_employee(employee_id):
         
         employee_name = existing.data[0].get('name', 'Unknown')
         
-        # Delete employee
         response = supabase.table('employees').delete().eq('id', employee_id).execute()
         
-        # Note: Supabase delete returns empty data on success, so we check if no error occurred
         return jsonify({
             'success': True,
             'message': f'Employee "{employee_name}" deleted successfully'
@@ -339,17 +323,14 @@ def upload_image():
                 'error': 'Image data and employee ID are required'
             }), 400
         
-        # Extract base64 image data
         image_data = data['image_data']
         employee_id = data['employee_id']
         
-        # Remove data URL prefix if present (data:image/jpeg;base64,)
         if ',' in image_data:
             image_data = image_data.split(',')[1]
         
         supabase = get_supabase_client()
         
-        # Check if employee exists
         existing = supabase.table('employees').select('id').eq('id', employee_id).execute()
         if not existing.data:
             return jsonify({
@@ -357,11 +338,8 @@ def upload_image():
                 'error': 'Employee not found'
             }), 404
         
-        # For simplicity, we'll store the base64 string directly in the database
-        # In production, you might want to use Supabase Storage or another cloud storage service
         image_url = f"data:image/jpeg;base64,{image_data}"
         
-        # Update employee with image URL
         response = supabase.table('employees').update({
             'image': image_url
         }).eq('id', employee_id).execute()
@@ -403,13 +381,11 @@ def search_employees():
         
         supabase = get_supabase_client()
         
-        # Get all employees and filter client-side (Supabase doesn't support ILIKE easily)
         response = supabase.table('employees').select(
             'id, name, email, phone, position, department, role, image, created_at, plain_password'
         ).eq('role', 'employee').execute()
         
         if response.data:
-            # Filter results
             filtered_employees = []
             for emp in response.data:
                 name = emp.get('name', '').lower()
@@ -463,7 +439,6 @@ def get_departments():
     try:
         supabase = get_supabase_client()
         
-        # Get unique departments from employees table
         response = supabase.table('employees').select('department').execute()
         
         if response.data:
@@ -478,7 +453,7 @@ def get_departments():
             
             return jsonify({
                 'success': True,
-                'departments': sorted(departments)  # Sort alphabetically
+                'departments': sorted(departments)
             })
         else:
             return jsonify({
@@ -503,7 +478,6 @@ def get_positions():
     try:
         supabase = get_supabase_client()
         
-        # Get unique positions from employees table
         response = supabase.table('employees').select('position').execute()
         
         if response.data:
@@ -518,7 +492,7 @@ def get_positions():
             
             return jsonify({
                 'success': True,
-                'positions': sorted(positions)  # Sort alphabetically
+                'positions': sorted(positions)
             })
         else:
             return jsonify({
@@ -531,3 +505,4 @@ def get_positions():
             'success': False,
             'error': f'Failed to fetch positions: {str(e)}'
         }), 500
+

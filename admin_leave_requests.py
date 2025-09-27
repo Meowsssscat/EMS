@@ -9,24 +9,19 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 
-# Load environment variables
 load_dotenv()
 
-# Create Blueprint
 leave_requests_bp = Blueprint('leave_requests', __name__, url_prefix='/admin')
 
-# Supabase configuration (matching your app.py structure)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-# Gmail SMTP configuration
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")  # Your Gmail address
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")  # Your Gmail app password
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")  
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")  
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 
-# Supabase clients
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 supabase_admin = None
 if SUPABASE_SERVICE_ROLE_KEY:
@@ -45,46 +40,36 @@ def _safe_data(resp):
 def send_notification_email(employee_email, employee_name, leave_type, status, start_date, end_date, reason=None):
     """Send notification email using Gmail SMTP"""
     try:
-        # Check if Gmail credentials are configured
         if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
             print("Gmail SMTP credentials not configured. Queuing email for later processing.")
-            # Store notification in database for later processing
             return _queue_email_notification(employee_email, employee_name, leave_type, status, start_date, end_date, reason)
         
-        # Create email subject
         subject = f"Leave Request {status.title()} - {leave_type}"
         
-        # Create HTML email body based on status
         html_body = _create_email_html_body(employee_name, leave_type, status, start_date, end_date, reason)
         
-        # Create plain text version as fallback
         plain_text_body = _create_email_text_body(employee_name, leave_type, status, start_date, end_date, reason)
         
-        # Create multipart message
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = f"EMS System <{EMAIL_HOST_USER}>"
         msg['To'] = employee_email
         
-        # Add both plain text and HTML versions
         part1 = MIMEText(plain_text_body, 'plain', 'utf-8')
         part2 = MIMEText(html_body, 'html', 'utf-8')
         
         msg.attach(part1)
         msg.attach(part2)
         
-        # Connect to Gmail SMTP server and send email
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()  # Enable security
+            server.starttls()  
             server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
             
-            # Send email
             text = msg.as_string()
             server.sendmail(EMAIL_HOST_USER, employee_email, text)
         
         print(f"Email sent successfully to {employee_name} ({employee_email})")
         
-        # Log successful notification
         log_notification(employee_email, employee_name, subject, 'sent', True)
         return True
         
@@ -470,7 +455,6 @@ def leave_requests_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # Check if user is admin (using the correct session keys)
     user_role = session.get('user_role')
     user_name = session.get('user_name', 'Admin')
     
@@ -479,16 +463,13 @@ def leave_requests_page():
         return redirect(url_for('home'))
     
     try:
-        # Get all leave requests with employee info
         leave_data = get_leave_requests_with_employee_info()
         
-        # Get statistics
         total_requests = len(leave_data)
         pending_requests = len([req for req in leave_data if req['status'] == 'pending'])
         approved_requests = len([req for req in leave_data if req['status'] == 'approved'])
         rejected_requests = len([req for req in leave_data if req['status'] == 'rejected'])
         
-        # Get all employees for the form
         client = supabase_admin or supabase
         employees_response = client.table('employees')\
             .select('id, name, email, department, position')\
@@ -531,7 +512,6 @@ def create_leave_request():
     try:
         data = request.get_json()
         
-        # Validate required fields
         required_fields = ['employee_id', 'leave_type', 'start_date', 'end_date']
         for field in required_fields:
             if not data.get(field):
@@ -543,7 +523,6 @@ def create_leave_request():
         end_date = data['end_date']
         reason = data.get('reason', '')
         
-        # Validate dates
         try:
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
@@ -557,12 +536,10 @@ def create_leave_request():
         except ValueError:
             return jsonify({'success': False, 'error': 'Invalid date format'}), 400
         
-        # Validate for overlapping requests
         is_valid, validation_message = validate_leave_request(employee_id, start_date, end_date)
         if not is_valid:
             return jsonify({'success': False, 'error': validation_message}), 400
         
-        # Get employee information for email
         client = supabase_admin or supabase
         employee_response = client.table('employees')\
             .select('name, email')\
@@ -575,7 +552,6 @@ def create_leave_request():
         
         employee = employee_data[0]
         
-        # Create leave request
         insert_data = {
             'employee_id': employee_id,
             'leave_type': leave_type,
@@ -589,7 +565,6 @@ def create_leave_request():
         result_data = _safe_data(response)
         
         if result_data:
-            # Send notification email
             send_notification_email(
                 employee['email'], 
                 employee['name'], 
@@ -636,7 +611,6 @@ def update_leave_status():
         
         client = supabase_admin or supabase
         
-        # Get current leave request with employee info
         current_response = client.table('leave_requests')\
             .select('*, employees(name, email)')\
             .eq('id', request_id)\
@@ -648,7 +622,6 @@ def update_leave_status():
         
         current_request = current_data[0]
         
-        # Update the status
         update_response = client.table('leave_requests')\
             .update({'status': new_status})\
             .eq('id', request_id)\
@@ -656,7 +629,6 @@ def update_leave_status():
         
         update_data = _safe_data(update_response)
         if update_data:
-            # Send notification email
             employee_info = current_request['employees']
             send_notification_email(
                 employee_info['email'],
@@ -699,7 +671,6 @@ def delete_leave_request():
         
         client = supabase_admin or supabase
         
-        # Check if request exists
         check_response = client.table('leave_requests')\
             .select('*, employees(name, email)')\
             .eq('id', request_id)\
@@ -708,7 +679,6 @@ def delete_leave_request():
         if not _safe_data(check_response):
             return jsonify({'success': False, 'error': 'Leave request not found'}), 404
         
-        # Delete the request
         delete_response = client.table('leave_requests')\
             .delete()\
             .eq('id', request_id)\
@@ -735,17 +705,14 @@ def get_leave_stats():
     
     try:
         client = supabase_admin or supabase
-        # Get all leave requests
         response = client.table('leave_requests').select('*').execute()
         leave_requests = _safe_data(response) or []
         
-        # Calculate statistics
         total = len(leave_requests)
         pending = len([req for req in leave_requests if req['status'] == 'pending'])
         approved = len([req for req in leave_requests if req['status'] == 'approved'])
         rejected = len([req for req in leave_requests if req['status'] == 'rejected'])
         
-        # Get leave type breakdown
         leave_types = {}
         for req in leave_requests:
             leave_type = req['leave_type']

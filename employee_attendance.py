@@ -1,8 +1,3 @@
-"""
-Employee Attendance Blueprint for Flask EMS
-Handles attendance marking and viewing functionality
-"""
-
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from datetime import datetime, date, timedelta
 from functools import wraps
@@ -10,10 +5,8 @@ import os
 import calendar
 from supabase import create_client, Client
 
-# Create blueprint
 employee_attendance_bp = Blueprint('employee_attendance', __name__, url_prefix='/employee')
 
-# Supabase client
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_SERVICE_KEY")
 supabase = create_client(url, key)
@@ -64,13 +57,11 @@ def get_employee_data():
 def get_attendance_stats(employee_id):
     """Get attendance statistics for employee"""
     try:
-        # Get current month range
         today = date.today()
         current_month_start = today.replace(day=1)
         _, last_day = calendar.monthrange(today.year, today.month)
         current_month_end = today.replace(day=last_day)
 
-        # Get attendance records for the current month
         response = supabase.table('attendance') \
             .select('*') \
             .eq('employee_id', employee_id) \
@@ -80,13 +71,10 @@ def get_attendance_stats(employee_id):
 
         present_days = len([record for record in response.data if record['status'] == 'present']) if response.data else 0
 
-        # Total working days = number of days in the month (or you can exclude weekends if needed)
         total_days = last_day  
 
-        # Calculate attendance rate
         attendance_rate = (present_days / total_days * 100) if total_days > 0 else 0
 
-        # Check if marked today
         today_response = supabase.table('attendance') \
             .select('*') \
             .eq('employee_id', employee_id) \
@@ -164,7 +152,6 @@ def mark_attendance():
         employee_id = session.get('user_id')
         today = date.today()
         
-        # Check if attendance already marked for today
         existing_response = supabase.table('attendance').select('*').eq('employee_id', employee_id).eq('date', today).execute()
         
         if existing_response.data:
@@ -174,7 +161,6 @@ def mark_attendance():
                 'type': 'warning'
             })
         
-        # Mark attendance as present
         insert_response = supabase.table('attendance').insert({
             'employee_id': employee_id,
             'date': today.isoformat(),
@@ -183,7 +169,6 @@ def mark_attendance():
         }).execute()
         
         if insert_response.data:
-            # Get updated stats
             updated_stats = get_attendance_stats(employee_id)
             
             return jsonify({
@@ -252,7 +237,6 @@ def attendance_stats():
             'message': 'Unable to fetch attendance statistics'
         }), 500
 
-# Error handlers for attendance blueprint
 @employee_attendance_bp.errorhandler(404)
 def attendance_not_found(error):
     """Handle 404 errors in attendance section"""

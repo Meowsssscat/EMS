@@ -1,4 +1,3 @@
-/* CSS Variables - Strict Color Palette */
 :root {
     --primary-navy: #1A237E;
     --primary-gray: #F5F5F5;
@@ -7,7 +6,6 @@
     --text-light: #FFFFFF;
     --gray-dark: #E0E0E0;
     
-    /* Additional utility colors */
     --shadow-light: rgba(0, 0, 0, 0.1);
     --shadow-medium: rgba(0, 0, 0, 0.15);
     --border-light: rgba(224, 224, 224, 0.5);
@@ -15,7 +13,6 @@
     --transition-speed: 0.3s;
 }
 
-/* Reset and base styles */
 * {
     box-sizing: border-box;
 }
