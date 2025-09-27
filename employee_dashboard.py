@@ -1,7 +1,4 @@
-"""
-Employee Dashboard Routes for Flask EMS with Supabase - COMPLETELY FIXED VERSION
-Handles all employee-facing dashboard functionality with real Supabase integration
-"""
+# employee_dashboard.py
 
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash, current_app
 from datetime import datetime, timedelta, date

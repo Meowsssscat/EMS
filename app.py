@@ -27,6 +27,9 @@ url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_SERVICE_KEY")
 supabase: Client = create_client(url, key)
 
+# Add this line immediately after creating supabase client
+app.supabase = supabase
+
 # Authentication decorator
 def login_required(f):
     @wraps(f)
@@ -60,14 +63,89 @@ app.register_blueprint(employee_leave_bp)
 app.register_blueprint(admin_attendance_bp)
 app.register_blueprint(leave_requests_bp)
 
+
+
+
+# Debug: Print all registered routes
+print("=== REGISTERED ROUTES DEBUG ===")
+for rule in app.url_map.iter_rules():
+    print(f"Route: {rule.rule} -> Endpoint: {rule.endpoint} -> Methods: {rule.methods}")
+
+# Debug: Check if employee_dashboard blueprint was registered
+print(f"Registered blueprints: {list(app.blueprints.keys())}")
+
+# Debug: Check if the specific endpoint exists
+try:
+    url = url_for('employee_dashboard.dashboard')
+    print(f"employee_dashboard.dashboard URL: {url}")
+except Exception as e:
+    print(f"Error building employee_dashboard.dashboard URL: {e}")
+
+print("=== END ROUTES DEBUG ===")
+
+# Also add a temporary test route in your blueprint to see if it's working
+@app.route('/test-employee-blueprint')
+def test_employee_blueprint():
+    return jsonify({
+        'status': 'Blueprint is working',
+        'user_in_session': 'user_id' in session,
+        'supabase_available': hasattr(app, 'supabase')
+    })
+
+
+
 # Initialize admin dashboard with proper supabase client
 init_admin_dashboard(app, supabase)
 
-app.supabase = supabase
+
+
+
+
+
+
+@app.route('/employee/dashboard-full')
+@login_required
+def employee_dashboard_full():
+    return redirect(url_for('employee_dashboard_temp'))
+
+@app.route('/employee/dashboard')
+@login_required
+def employee_dashboard_temp():
+    """Temporary employee dashboard route"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    try:
+        # Get employee data using the functions from app.py
+        employee = get_employee_data()
+        if not employee:
+            flash('Employee profile not found')
+            return redirect(url_for('login'))
+            
+        employee_stats = get_employee_stats()
+        today_attendance = get_today_attendance()
+        recent_leave_requests = get_recent_leave_requests()
+
+        return render_template('employee_dashboard.html',
+                             employee=employee,
+                             employee_stats=employee_stats,
+                             today_attendance=today_attendance,
+                             recent_leave_requests=recent_leave_requests)
+    except Exception as e:
+        print(f"Error loading employee dashboard: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return f"Error loading dashboard: {str(e)}", 500
+
+
+
+
 
 @app.route('/')
 def home():
     return redirect(url_for('login'))
+
+# In your app.py, replace the login route with this:
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -88,9 +166,10 @@ def login():
                     session['user_name'] = user_data['name']
 
                     if user_data['role'] == 'admin':
-                        return redirect(url_for('admin_dashboard.dashboard'))  # ✅ will now work
+                        return redirect(url_for('employee_dashboard_temp'))  # Use the temporary route
                     else:
-                        return redirect(url_for('employee_dashboard_full'))
+                        # FIXED: Use the correct blueprint endpoint
+                        return redirect(url_for('employee_dashboard_temp'))  # Use the temporary route  # Changed this line
                 else:
                     flash('Invalid password')
             else:
@@ -98,7 +177,7 @@ def login():
 
         except Exception as e:
             flash(f'Login failed: {str(e)}')
-            print(f"Error details: {e}")  # Debugging info
+            print(f"Error details: {e}")
 
     return render_template('login.html')
 
@@ -529,41 +608,57 @@ def get_employee_stats():
         print(f"Error calculating statistics: {e}")
         return default_stats()
 
-# Employee Dashboard Routes
+
+
+
+
+
+
+
 @app.route('/employee')
 @login_required
 def employee_dashboard_simple():
     """Simple employee redirect"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return redirect(url_for('employee_dashboard_full'))
+    return redirect(url_for('employee_dashboard.dashboard'))  # Redirect to blueprint route
 
-@app.route('/employee/dashboard')
-@login_required
-def employee_dashboard_full():
-    """Full employee dashboard with all data"""
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+
+# # Employee Dashboard Routes
+# @app.route('/employee')
+# @login_required
+# def employee_dashboard_simple():
+#     """Simple employee redirect"""
+#     if 'user_id' not in session:
+#         return redirect(url_for('login'))
+#     return redirect(url_for('employee_dashboard_full'))
+
+# @app.route('/employee/dashboard')
+# @login_required
+# def employee_dashboard_full():
+#     """Full employee dashboard with all data"""
+#     if 'user_id' not in session:
+#         return redirect(url_for('login'))
     
-    try:
-        employee = get_employee_data()
-        if not employee:
-            flash('Employee profile not found')
-            return redirect(url_for('login'))
+#     try:
+#         employee = get_employee_data()
+#         if not employee:
+#             flash('Employee profile not found')
+#             return redirect(url_for('login'))
             
-        employee_stats = get_employee_stats()
-        today_attendance = get_today_attendance()
-        recent_leave_requests = get_recent_leave_requests()
+#         employee_stats = get_employee_stats()
+#         today_attendance = get_today_attendance()
+#         recent_leave_requests = get_recent_leave_requests()
 
         
-        return render_template('employee_dashboard.html',
-                             employee=employee,
-                             employee_stats=employee_stats,
-                             today_attendance=today_attendance,
-                             recent_leave_requests=recent_leave_requests)
-    except Exception as e:
-        print(f"Error loading employee dashboard: {e}")
-        return "Error loading dashboard", 500
+#         return render_template('employee_dashboard.html',
+#                              employee=employee,
+#                              employee_stats=employee_stats,
+#                              today_attendance=today_attendance,
+#                              recent_leave_requests=recent_leave_requests)
+#     except Exception as e:
+#         print(f"Error loading employee dashboard: {e}")
+#         return "Error loading dashboard", 500
 
 @app.route('/employee/dashboard-data')
 @login_required
@@ -606,14 +701,14 @@ def employee_profile_page():
         employee = get_employee_data()
         if not employee:
             flash('Employee profile not found')
-            return redirect(url_for('employee_dashboard_full'))
+            return redirect(url_for('employee_dashboard.dashboard'))
         
         return render_template('employee_profile.html', employee=employee)
         
     except Exception as e:
         print(f"Error loading employee profile page: {e}")
         flash('Error loading profile page')
-        return redirect(url_for('employee_dashboard_full'))
+        return redirect(url_for('employee_dashboard.dashboard'))
 
 # Custom Jinja2 filter for date parsing
 def strptime_filter(date_string, format_string):
