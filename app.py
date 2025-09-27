@@ -9,6 +9,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 import calendar
 
+
+
+# Replace the blueprint import section in your app.py with this:
+
+# Add logging configuration for debugging
+
 # Load env
 load_dotenv()
 
@@ -30,22 +36,32 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Import and register blueprints AFTER app is created
-from employee_management import employee_bp
+import logging
+if not app.debug:
+    logging.basicConfig(level=logging.INFO)
+    app.logger.setLevel(logging.INFO)
+
+
+app.supabase = supabase
+
+from employee_management import employee_bp  # This should work now
 from employee_attendance import employee_attendance_bp
 from employee_leave import employee_leave_bp
 from admin_attendance import admin_attendance_bp
 from admin_leave_requests import leave_requests_bp
-from admin_dashboard import init_admin_dashboard   # <-- use init function
+from admin_dashboard import init_admin_dashboard
 from admin_dashboard_routes import admin_bp
 
+# Register all blueprints
 app.register_blueprint(admin_bp)
-app.register_blueprint(employee_bp)
+app.register_blueprint(employee_bp)  # Fixed employee blueprint
 app.register_blueprint(employee_attendance_bp)
 app.register_blueprint(employee_leave_bp)
 app.register_blueprint(admin_attendance_bp)
 app.register_blueprint(leave_requests_bp)
-init_admin_dashboard(app, supabase)  # <-- properly initializes admin dashboard
+
+# Initialize admin dashboard with proper supabase client
+init_admin_dashboard(app, supabase)
 
 @app.route('/')
 def home():
